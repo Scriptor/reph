@@ -1,0 +1,7 @@
+{
+    "name": "scriptor/reph",
+    "type": "project",
+    "description": "Repl server for Pharen",
+    "kewyords": ["pharen", "repl"],
+    "license": "MIT",
+}
