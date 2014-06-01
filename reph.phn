@@ -1,0 +1,46 @@
+(ns reph)
+(use pharen.repl as repl)
+
+(error-reporting E_ALL)
+(set-time-limit 0)
+(ob-implicit-flush)
+
+(fn read-loop (msgsock)
+  (let [buf (socket-read msgsock 2048 PHP_NORMAL_READ)]
+    (if (or (false? buf) (=== buf "shutdown"))
+      FALSE
+      (let [resp (. "You said: " buf "\n")]
+        (prn "Received: " buf)
+        (socket-write msgsock resp (strlen resp))
+        (read-loop msgsock)))))
+
+(fn repl-loop (msgsock)
+  (fn prompt (prompt-str)
+    (socket-write msgsock prompt-str (strlen prompt-str))
+    (let [code (socket-read msgsock 2048 PHP_NORMAL_READ)]
+      (if (false? code)
+        "quit"
+        code)))
+
+  (fn reph-prn (result)
+    (let [res-line (. result "\n")]
+      (socket-write msgsock res-line (strlen res-line))))
+
+  (repl.work "" (arr []) #prompt #reph-prn))
+
+(fn accept-loop (sock)
+  (let [msgsock (socket-accept sock)
+        msg (repl.intro)]
+    (socket-write msgsock msg (strlen msg))
+    (if (false? (repl-loop msgsock))
+      (socket-close msgsock)
+      (accept-loop sock))))
+
+(let [addr "127.0.0.1"
+      port 10000
+      sock (socket-create AF_INET SOCK_STREAM SOL_TCP)]
+  (socket-bind sock addr port)
+  (socket-listen sock 5)
+  (prn "Initializing Reph server on " addr ":" port)
+  (accept-loop sock)
+  (socket-close sock))
