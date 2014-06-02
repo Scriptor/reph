@@ -39,7 +39,10 @@
 (let [addr "127.0.0.1"
       port 10000
       sock (socket-create AF_INET SOCK_STREAM SOL_TCP)
-      repl-vars (get-repl-vars (when-set (:argv 1)))]
+      file (when-set (:argv 1))
+      repl-vars (get-repl-vars file)]
+  (compile-file file)
+  (set! (:: .NamespaceNode repling) TRUE)
   (socket-bind sock addr port)
   (socket-listen sock 5)
   (prn "Initializing Reph server on " addr ":" port)
