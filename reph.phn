@@ -1,12 +1,20 @@
 (ns reph)
 (use pharen.repl as repl)
 
+(defmacro when-set (val)
+  '(when (isset ~val) ~val))
+
 (error-reporting E_ALL)
 (set-time-limit 0)
 (ob-implicit-flush)
 
+(fn get-repl-vars (file)
+  (if file
+    (let [phpfile (str-replace ".phn" ".php" file)]
+      (repl.get-file-vars phpfile (arr [])))
+    (arr [])))
 
-(fn repl-loop (msgsock)
+(fn repl-loop (msgsock repl-vars)
   (fn prompt (prompt-str)
     (socket-write msgsock prompt-str (strlen prompt-str))
     (let [code (socket-read msgsock 2048 PHP_NORMAL_READ)]
@@ -18,21 +26,22 @@
     (let [res-line (. result "\n")]
       (socket-write msgsock res-line (strlen res-line))))
 
-  (repl.work "" (arr []) #prompt #reph-prn))
+  (repl.work "" repl-vars #prompt #reph-prn))
 
-(fn accept-loop (sock)
+(fn accept-loop (sock repl-vars)
   (let [msgsock (socket-accept sock)
         msg (repl.intro)]
     (socket-write msgsock msg (strlen msg))
-    (if (false? (repl-loop msgsock))
+    (if (false? (repl-loop msgsock repl-vars))
       (socket-close msgsock)
-      (accept-loop sock))))
+      (accept-loop sock repl-vars))))
 
 (let [addr "127.0.0.1"
       port 10000
-      sock (socket-create AF_INET SOCK_STREAM SOL_TCP)]
+      sock (socket-create AF_INET SOCK_STREAM SOL_TCP)
+      repl-vars (get-repl-vars (when-set (:argv 1)))]
   (socket-bind sock addr port)
   (socket-listen sock 5)
   (prn "Initializing Reph server on " addr ":" port)
-  (accept-loop sock)
+  (accept-loop sock repl-vars)
   (socket-close sock))
