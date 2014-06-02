@@ -5,14 +5,6 @@
 (set-time-limit 0)
 (ob-implicit-flush)
 
-(fn read-loop (msgsock)
-  (let [buf (socket-read msgsock 2048 PHP_NORMAL_READ)]
-    (if (or (false? buf) (=== buf "shutdown"))
-      FALSE
-      (let [resp (. "You said: " buf "\n")]
-        (prn "Received: " buf)
-        (socket-write msgsock resp (strlen resp))
-        (read-loop msgsock)))))
 
 (fn repl-loop (msgsock)
   (fn prompt (prompt-str)
