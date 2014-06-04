@@ -50,6 +50,7 @@
         repl-vars (get-repl-vars file)]
     (when file (compile-file file))
     (set! (:: .NamespaceNode repling) TRUE)
+    (socket-set-option sock SOL_SOCKET SO_REUSEADDR 1)
     (socket-bind sock addr port)
     (socket-listen sock 5)
     (prn "Initializing Reph server on " addr ":" port)
