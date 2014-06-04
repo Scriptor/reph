@@ -17,7 +17,8 @@
 (fn repl-loop (msgsock repl-vars)
   (def prompt
     (lambda (prompt-str)
-            (socket-write msgsock prompt-str (strlen prompt-str))
+            (local newlined (. prompt-str "\n"))
+            (socket-write msgsock newlined (strlen newlined))
             (let [code (socket-read msgsock 2048 PHP_NORMAL_READ)]
               (if (false? code)
                 "quit"
