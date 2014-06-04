@@ -40,15 +40,20 @@
       (socket-close sock)
       (accept-loop sock repl-vars))))
 
-(let [addr "127.0.0.1"
-      port 10000
-      sock (socket-create AF_INET SOCK_STREAM SOL_TCP)
-      file (when-set (:argv 1))
-      repl-vars (get-repl-vars file)]
-  (when file (compile-file file))
-  (set! (:: .NamespaceNode repling) TRUE)
-  (socket-bind sock addr port)
-  (socket-listen sock 5)
-  (prn "Initializing Reph server on " addr ":" port)
-  (accept-loop sock repl-vars)
-  (socket-close sock))
+(fn run ([port 10000])
+  (keyword-call global $argv)
+
+  (let [addr "127.0.0.1"
+        sock (socket-create AF_INET SOCK_STREAM SOL_TCP)
+        file (when-set (:argv 1))
+        repl-vars (get-repl-vars file)]
+    (when file (compile-file file))
+    (set! (:: .NamespaceNode repling) TRUE)
+    (socket-bind sock addr port)
+    (socket-listen sock 5)
+    (prn "Initializing Reph server on " addr ":" port)
+    (accept-loop sock repl-vars)
+    (socket-close sock)))
+
+(when-not (count (debug-backtrace))
+  (run))

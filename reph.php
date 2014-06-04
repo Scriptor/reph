@@ -1,4 +1,3 @@
-#! /usr/bin/env php
 <?php
 namespace reph;
 require_once('/home/scriptor/pharen/lang.php');
@@ -72,29 +71,40 @@ function accept_loop($sock, $repl_vars){
 	}
 }
 
-$addr = "127.0.0.1";
-$port = 10000;
-$sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+function run($port=10000){
+	global $argv;
+	$addr = "127.0.0.1";
+	$sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+	
+	$__condtmpvar4 = Null;
+	if(isset($argv[1])){
+		$__condtmpvar4 = $argv[1];
+	}
+	else{
+		$__condtmpvar4 = NULL;
+	}
+	$file = $__condtmpvar4;
+	$repl_vars = get_repl_vars($file);
+		if($file){
+		compile_file($file);
+	}
+	else{
+		NULL;
+	}
 
-$__condtmpvar4 = Null;
-if(isset($argv[1])){
-	$__condtmpvar4 = $argv[1];
+		\NamespaceNode::$repling = TRUE;
+	socket_bind($sock, $addr, $port);
+	socket_listen($sock, 5);
+	prn("Initializing Reph server on ", $addr, ":", $port);
+	accept_loop($sock, $repl_vars);
+	return socket_close($sock);
 }
-else{
-	$__condtmpvar4 = NULL;
-}
-$file = $__condtmpvar4;
-$repl_vars = get_repl_vars($file);
-if($file){
-	compile_file($file);
+
+if(!(count(debug_backtrace()))){
+	run();
 }
 else{
 	NULL;
 }
 
-\NamespaceNode::$repling = TRUE;
-socket_bind($sock, $addr, $port);
-socket_listen($sock, 5);
-prn("Initializing Reph server on ", $addr, ":", $port);
-accept_loop($sock, $repl_vars);
-socket_close($sock);
+
