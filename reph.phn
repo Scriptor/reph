@@ -46,7 +46,8 @@
 
   (let [addr "127.0.0.1"
         sock (socket-create AF_INET SOCK_STREAM SOL_TCP)
-        file (when-set (:argv 1))
+        opts (getopt "j::" (arr ["file:"]))
+        file (when-set (:opts :file))
         repl-vars (get-repl-vars file)]
     (when file (compile-file file))
     (set! (:: .NamespaceNode repling) TRUE)
