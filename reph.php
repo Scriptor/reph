@@ -1,3 +1,4 @@
+#! /usr/bin/env php
 <?php
 namespace reph;
 require_once('/home/scriptor/pharen/lang.php');
@@ -20,8 +21,9 @@ function get_repl_vars($file){
 	}
 }
 
-function _reph__lambdafunc18($prompt_str, $__closure_id){
+function _reph__lambdafunc18($prstr, $__closure_id){
 	$msgsock = Lexical::get_lexical_binding('_reph', 224, '$msgsock', isset($__closure_id)?$__closure_id:0);;
+	$prompt_str = format($prstr, "prompt");
 	socket_write($msgsock, $prompt_str, strlen($prompt_str));
 		$msgsock = Lexical::get_lexical_binding('_reph', 224, '$msgsock', isset($__closure_id)?$__closure_id:0);;
 	$code = socket_read($msgsock, 2048, PHP_NORMAL_READ);
@@ -35,7 +37,7 @@ function _reph__lambdafunc18($prompt_str, $__closure_id){
 
 function _reph__lambdafunc19($result, $__closure_id){
 		$msgsock = Lexical::get_lexical_binding('_reph', 224, '$msgsock', isset($__closure_id)?$__closure_id:0);;
-	$res_line = ($result . "\n");
+	$res_line = format(($result . "\n"), "result");
 	return socket_write($msgsock, $res_line, strlen($res_line));
 }
 
@@ -63,7 +65,8 @@ function repl_loop($msgsock, $repl_vars){
 function accept_loop($sock, $repl_vars){
 	while(1){
 		$msgsock = socket_accept($sock);
-		$msg = repl\intro();
+		$msg = format(repl\intro(), "result");
+			var_dump($msg);
 			socket_write($msgsock, $msg, strlen($msg));
 			if(false__question(repl_loop($msgsock, $repl_vars))){
 				return socket_close($sock);
@@ -71,14 +74,14 @@ function accept_loop($sock, $repl_vars){
 	}
 }
 
-function run($port=10000){
+function run($port=10000, $opts=array()){
 	global $argv;
 	$addr = "127.0.0.1";
 	$sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
 	
 	$__condtmpvar4 = Null;
-	if(isset($argv[1])){
-		$__condtmpvar4 = $argv[1];
+	if(isset($opts["file"])){
+		$__condtmpvar4 = $opts["file"];
 	}
 	else{
 		$__condtmpvar4 = NULL;
@@ -93,6 +96,7 @@ function run($port=10000){
 	}
 
 		\NamespaceNode::$repling = TRUE;
+	socket_set_option($sock, SOL_SOCKET, SO_REUSEADDR, 1);
 	socket_bind($sock, $addr, $port);
 	socket_listen($sock, 5);
 	prn("Initializing Reph server on ", $addr, ":", $port);
@@ -101,7 +105,20 @@ function run($port=10000){
 }
 
 if(!(count(debug_backtrace()))){
-	run();
+	$opts = getopt("j::", arr(\PharenVector::create_from_array(array("file:"))));
+	if(isset($opts["j"])){
+		function format($string, $type){
+			return (json_encode(arr(hashify(array("s" => $string, "type" => $type)))) . "\n");
+		}
+		
+	}
+	else{
+		function format($string, $type){
+			return $string;
+		}
+		
+	}
+	run(10000, $opts);
 }
 else{
 	NULL;

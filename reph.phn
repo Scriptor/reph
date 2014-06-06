@@ -16,9 +16,9 @@
 
 (fn repl-loop (msgsock repl-vars)
   (def prompt
-    (lambda (prompt-str)
-            (local newlined (. prompt-str "\n"))
-            (socket-write msgsock newlined (strlen newlined))
+    (lambda (prstr)
+            (local prompt-str (format prstr "prompt"))
+            (socket-write msgsock prompt-str (strlen prompt-str))
             (let [code (socket-read msgsock 2048 PHP_NORMAL_READ)]
               (if (false? code)
                 "quit"
@@ -26,7 +26,7 @@
 
   (def reph-prn
     (lambda (result)
-            (let [res-line (. result "\n")]
+            (let [res-line (format (. result "\n") "result")]
               (socket-write msgsock res-line (strlen res-line)))))
 
   (when (false? (repl.work "" repl-vars prompt reph-prn))
@@ -35,18 +35,17 @@
 
 (fn accept-loop (sock repl-vars)
   (let [msgsock (socket-accept sock)
-        msg (repl.intro)]
+        msg (format (repl.intro) "result")]
     (socket-write msgsock msg (strlen msg))
     (if (false? (repl-loop msgsock repl-vars))
       (socket-close sock)
       (accept-loop sock repl-vars))))
 
-(fn run ([port 10000])
+(fn run ([port 10000] [opts []])
   (keyword-call global $argv)
 
   (let [addr "127.0.0.1"
         sock (socket-create AF_INET SOCK_STREAM SOL_TCP)
-        opts (getopt "j::" (arr ["file:"]))
         file (when-set (:opts :file))
         repl-vars (get-repl-vars file)]
     (when file (compile-file file))
@@ -59,4 +58,10 @@
     (socket-close sock)))
 
 (when-not (count (debug-backtrace))
-  (run))
+  (local opts (getopt "j::" (arr ["file:"])))
+  (if (isset (:opts :j)) 
+    (fn format (string type)
+      (. (json-encode (arr {:s string :type type})) "\n"))
+    (fn format (string type)
+      string))
+  (run 10000 opts))
