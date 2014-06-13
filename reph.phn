@@ -1,9 +1,6 @@
 (ns reph)
 (use pharen.repl as repl)
 
-(defmacro when-set (val)
-  '(when (isset ~val) ~val))
-
 (error-reporting E_ALL)
 (set-time-limit 0)
 (ob-implicit-flush)
